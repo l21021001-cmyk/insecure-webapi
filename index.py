@@ -4,10 +4,16 @@ import hashlib
 import mysql.connector
 import base64
 import shutil
+import os
+from dotenv import load_dotenv
 from datetime import datetime
 from pathlib import Path
 from bottle import route, run, template, post, request, static_file
+# OWASP A04:2025 Cryptographic Failures
+# Cargar variables sensibles desde archivo .env
+# Evita exponer credenciales en repositorios Git.
 
+load_dotenv()
 
 
 def loadDatabaseSettings(pathjs):
@@ -54,7 +60,17 @@ def getToken():
 """
 @post('/Registro')
 def Registro():
-	dbcnf = loadDatabaseSettings('db.json');
+	#dbcnf = loadDatabaseSettings('db.json');
+	# OWASP A04:2025
+	# Credenciales obtenidas desde variables de entorno.
+
+	dbcnf = {
+	    "host": os.getenv("DB_HOST"),
+	    "port": int(os.getenv("DB_PORT")),
+	    "dbname": os.getenv("DB_NAME"),
+	    "user": os.getenv("DB_USER"),
+	    "password": os.getenv("DB_PASSWORD")
+	}
 	db = mysql.connector.connect(
 		host='localhost', port = dbcnf['port'],
 		database = dbcnf['dbname'],
@@ -100,7 +116,20 @@ def Registro():
 
 @post('/Login')
 def Login():
-	dbcnf = loadDatabaseSettings('db.json');
+	#dbcnf = loadDatabaseSettings('db.json');
+	# OWASP A04:2025
+	# Credenciales obtenidas desde variables de entorno.
+
+	dbcnf = {
+	    "host": os.getenv("DB_HOST"),
+	    "port": int(os.getenv("DB_PORT")),
+	    "dbname": os.getenv("DB_NAME"),
+	    "user": os.getenv("DB_USER"),
+	    "password": os.getenv("DB_PASSWORD")
+	}	
+	
+	
+	
 	db = mysql.connector.connect(
 		host='localhost', port = dbcnf['port'],
 		database = dbcnf['dbname'],
@@ -186,7 +215,17 @@ def Imagen():
 	if not R:
 		return {"R":-1}
 	
-	dbcnf = loadDatabaseSettings('db.json');
+	#dbcnf = loadDatabaseSettings('db.json');
+	# OWASP A04:2025
+	# Credenciales obtenidas desde variables de entorno.
+
+	dbcnf = {
+	    "host": os.getenv("DB_HOST"),
+	    "port": int(os.getenv("DB_PORT")),
+	    "dbname": os.getenv("DB_NAME"),
+	    "user": os.getenv("DB_USER"),
+	    "password": os.getenv("DB_PASSWORD")
+	}	
 	db = mysql.connector.connect(
 		host='localhost', port = dbcnf['port'],
 		database = dbcnf['dbname'],
@@ -246,7 +285,17 @@ def Imagen():
 
 @post('/Descargar')
 def Descargar():
-	dbcnf = loadDatabaseSettings('db.json');
+	#dbcnf = loadDatabaseSettings('db.json');
+	# OWASP A04:2025
+	# Credenciales obtenidas desde variables de entorno.
+
+	dbcnf = {
+	    "host": os.getenv("DB_HOST"),
+	    "port": int(os.getenv("DB_PORT")),
+	    "dbname": os.getenv("DB_NAME"),
+	    "user": os.getenv("DB_USER"),
+	    "password": os.getenv("DB_PASSWORD")
+	}
 	db = mysql.connector.connect(
 		host='localhost', port = dbcnf['port'],
 		database = dbcnf['dbname'],

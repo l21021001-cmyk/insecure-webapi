@@ -1,7 +1,9 @@
 /*
 ###-
 create database webapps;
-GRANT ALL PRIVILEGES ON webapps.* TO 'udbwebaps'@'localhost' IDENTIFIED BY 'ku>;k8ND4CN4';
+-- OWASP A04:2025
+-- Las credenciales NO deben almacenarse en repositorios.
+-- Configurar usuario y contraseña manualmente en producción.
 FLUSH PRIVILEGES
 */
 
