@@ -89,7 +89,28 @@ def Registro():
 	R = False
 	try:
 		with db.cursor() as cursor:
-			cursor.execute(f'insert into Usuario values(null,"{request.json["uname"]}","{request.json["email"]}",md5("{request.json["password"]}"))');
+			#cursor.execute(f'insert into Usuario values(null,"{request.json["uname"]}","{request.json["email"]}",md5("{request.json["password"]}"))');
+			# OWASP A05:2025 Injection
+			# Parche SQL Injection usando consultas parametrizadas.
+			# Se evita concatenar datos enviados por el usuario directamente en SQL.
+
+			sql = '''
+			INSERT INTO Usuario
+			VALUES (
+			    NULL,
+			    %s,
+			    %s,
+			    MD5(%s)
+			)
+			'''
+			
+			valores = (
+			    request.json["uname"],
+			    request.json["email"],
+			    request.json["password"]
+			)
+			
+			cursor.execute(sql, valores)
 			R = cursor.lastrowid
 			db.commit()
 		db.close()
@@ -151,7 +172,23 @@ def Login():
 	try:
 		with db.cursor() as cursor:
 			print(f'Select id from  Usuario where uname ="{request.json["uname"]}" and password = md5("{request.json["password"]}")')
-			cursor.execute(f'Select id from  Usuario where uname ="{request.json["uname"]}" and password = md5("{request.json["password"]}")');
+			#cursor.execute(f'Select id from  Usuario where uname ="{request.json["uname"]}" and password = md5("{request.json["password"]}")');
+			# OWASP A05:2025 Injection
+			# Uso de consultas parametrizadas para evitar SQL Injection.
+
+			sql = '''
+			SELECT id
+			FROM Usuario
+			WHERE uname = %s
+			AND password = MD5(%s)
+			'''
+
+			valores = (
+			    request.json["uname"],
+			    request.json["password"]
+			)
+
+			cursor.execute(sql, valores)
 			R = cursor.fetchall()
 	except Exception as e: 
 		print(e)
@@ -172,8 +209,20 @@ def Login():
 	
 	try:
 		with db.cursor() as cursor:
-			cursor.execute(f'Delete from AccesoToken where id_Usuario = "{R[0][0]}"');
-			cursor.execute(f'insert into AccesoToken values({R[0][0]},"{T}",now())');
+			#cursor.execute(f'Delete from AccesoToken where id_Usuario = "{R[0][0]}"');
+			#cursor.execute(f'insert into AccesoToken values({R[0][0]},"{T}",now())');
+			# OWASP A05:2025 Injection
+			# Uso de parametros SQL para operaciones de token.
+
+			cursor.execute(
+			    'DELETE FROM AccesoToken WHERE id_Usuario = %s',
+			    (R[0][0],)
+			)
+
+			cursor.execute(
+			    'INSERT INTO AccesoToken VALUES(%s,%s,NOW())',
+			    (R[0][0], T)
+			)
 			db.commit()
 			db.close()
 			return {"R":0,"D":T}
@@ -239,7 +288,14 @@ def Imagen():
 	R = False
 	try:
 		with db.cursor() as cursor:
-			cursor.execute(f'select id_Usuario from AccesoToken where token = "{TKN}"');
+			#cursor.execute(f'select id_Usuario from AccesoToken where token = "{TKN}"');
+			# OWASP A05:2025 Injection
+			# Validacion segura de token mediante parametros SQL.
+
+			cursor.execute(
+			    'SELECT id_Usuario FROM AccesoToken WHERE token = %s',
+			    (TKN,)
+			)
 			R = cursor.fetchall()
 	except Exception as e: 
 		print(e)
@@ -256,7 +312,18 @@ def Imagen():
 	# Guardar info del archivo en la base de datos
 	try:
 		with db.cursor() as cursor:
-			cursor.execute(f'insert into Imagen values(null,"{request.json["name"]}","img/",{id_Usuario})');
+			#cursor.execute(f'insert into Imagen values(null,"{request.json["name"]}","img/",{id_Usuario})');
+			# OWASP A05:2025 Injection
+			# Insercion segura usando consultas parametrizadas.
+
+			cursor.execute(
+			    'INSERT INTO Imagen VALUES(NULL,%s,%s,%s)',
+			    (
+			        request.json["name"],
+			        "img/",
+			        id_Usuario
+			    )
+			)
 			cursor.execute('select max(id) as idImagen from Imagen where id_Usuario = '+str(id_Usuario));
 			R = cursor.fetchall()
 			idImagen = R[0][0];
@@ -321,7 +388,14 @@ def Descargar():
 	R = False
 	try:
 		with db.cursor() as cursor:
-			cursor.execute('select id_Usuario from AccesoToken where token = "'+TKN+'"');
+			#cursor.execute('select id_Usuario from AccesoToken where token = "'+TKN+'"');
+			# OWASP A05:2025 Injection
+			# Consulta parametrizada para validacion de token.
+
+			cursor.execute(
+			    'SELECT id_Usuario FROM AccesoToken WHERE token = %s',
+			    (TKN,)
+			)
 			R = cursor.fetchall()
 	except Exception as e: 
 		print(e)
@@ -334,7 +408,14 @@ def Descargar():
 	
 	try:
 		with db.cursor() as cursor:
-			cursor.execute('Select name,ruta from  Imagen where id = '+str(idImagen));
+			#cursor.execute('Select name,ruta from  Imagen where id = '+str(idImagen));
+			# OWASP A05:2025 Injection
+			# Consulta segura para obtencion de imagen.
+
+			cursor.execute(
+			    'SELECT name,ruta FROM Imagen WHERE id = %s',
+			    (idImagen,)
+			)
 			R = cursor.fetchall()
 	except Exception as e: 
 		print(e)
