@@ -3,6 +3,7 @@ import random
 import hashlib
 import mysql.connector
 import base64
+import bcrypt
 import shutil
 import os
 from dotenv import load_dotenv
@@ -100,14 +101,22 @@ def Registro():
 			    NULL,
 			    %s,
 			    %s,
-			    MD5(%s)
+			    %s
 			)
 			'''
-			
+			# OWASP A04:2025 Cryptographic Failures
+			# Reemplazo de MD5 por bcrypt para almacenamiento seguro de contraseñas.
+			# bcrypt agrega salt automatico y resistencia a fuerza bruta.
+
+			password_hash = bcrypt.hashpw(
+			    request.json["password"].encode(),
+			    bcrypt.gensalt()
+			).decode()
 			valores = (
 			    request.json["uname"],
 			    request.json["email"],
-			    request.json["password"]
+			    #request.json["password"]
+			    password_hash
 			)
 			
 			cursor.execute(sql, valores)
@@ -174,22 +183,38 @@ def Login():
 			print(f'Select id from  Usuario where uname ="{request.json["uname"]}" and password = md5("{request.json["password"]}")')
 			#cursor.execute(f'Select id from  Usuario where uname ="{request.json["uname"]}" and password = md5("{request.json["password"]}")');
 			# OWASP A05:2025 Injection
-			# Uso de consultas parametrizadas para evitar SQL Injection.
+			# Uso de consultas parametrizadas para evitar SQL Injection
+			# OWASP A04:2025 Cryptographic Failures
+			# Verificacion segura de password usando bcrypt.
 
 			sql = '''
-			SELECT id
+			SELECT id, password
 			FROM Usuario
 			WHERE uname = %s
-			AND password = MD5(%s)
 			'''
 
-			valores = (
-			    request.json["uname"],
-			    request.json["password"]
+			cursor.execute(sql, (request.json["uname"],))
+
+			R = cursor.fetchall()
+
+			if not R:
+			db.close()
+			return {"R":-3}
+
+			id_usuario = R[0][0]
+			password_hash = R[0][1]
+
+			# Validacion segura de contraseña
+			password_ok = bcrypt.checkpw(
+			request.json["password"].encode(),
+			password_hash.encode()
 			)
 
-			cursor.execute(sql, valores)
-			R = cursor.fetchall()
+			if not password_ok:
+			db.close()
+			return {"R":-3}
+
+	
 	except Exception as e: 
 		print(e)
 		db.close()
@@ -203,8 +228,8 @@ def Login():
 	T = getToken();
 	#file_put_contents('/tmp/log','insert into AccesoToken values('.R[0].',"'.T.'",now())');
 	with open("/tmp/log","a") as log:
-		log.write(f'Delete from AccesoToken where id_Usuario = "{R[0][0]}"\n')
-		log.write(f'insert into AccesoToken values({R[0][0]},"{T}",now())\n')
+		log.write(f'Delete from AccesoToken where id_Usuario = ""\n')
+		log.write(f'insert into AccesoToken values(id_usuario,"{T}",now())\n')
 	
 	
 	try:
