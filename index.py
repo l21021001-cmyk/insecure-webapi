@@ -4,6 +4,7 @@ import hashlib
 import mysql.connector
 import base64
 import bcrypt
+import secrets
 import shutil
 import os
 from dotenv import load_dotenv
@@ -32,20 +33,15 @@ function loadDatabaseSettings(pathjs):
 	return json_a;
 
 """
-def getToken():
-	tiempo = datetime.now().timestamp()
-	numero = random.random()
-	cadena = str(tiempo) + str(numero)
-	numero2 = random.random()
-	cadena2 = str(numero)+str(tiempo)+str(numero2)
-	m = hashlib.sha1()
-	m.update(cadena.encode())
-	P = m.hexdigest()
-	m = hashlib.md5()
-	m.update(cadena.encode())
-	Q = m.hexdigest()
-	return f"{P[:20]}{Q[20:]}"
+# OWASP A04:2025 Cryptographic Failures
+# Generacion segura de tokens utilizando el modulo secrets.
+# Se eliminan MD5, SHA1 y random() por ser criptograficamente inseguros.
 
+def getToken():
+
+    # Genera token hexadecimal seguro de 64 caracteres
+    # usando un generador criptografico del sistema operativo.
+    return secrets.token_hex(32)
 """
 */ 
 # Registro
