@@ -5,6 +5,7 @@ import mysql.connector
 import base64
 import bcrypt
 import re
+import logging
 import binascii
 import secrets
 import shutil
@@ -19,6 +20,19 @@ from bottle import route, run, template, post, request, static_file
 
 load_dotenv()
 
+# OWASP A09:2025 Security Logging and Monitoring Failures
+# Configuracion centralizada de logs de seguridad.
+
+LOG_DIR = Path("logs")
+
+if not LOG_DIR.exists():
+    LOG_DIR.mkdir()
+
+logging.basicConfig(
+    filename='logs/webapi.log',
+    level=logging.INFO,
+    format='%(asctime)s %(levelname)s %(message)s'
+)
 
 def loadDatabaseSettings(pathjs):
 	pathjs = Path(pathjs)
@@ -122,7 +136,8 @@ def Registro():
 			db.commit()
 		db.close()
 	except Exception as e:
-		print(e) 
+		logging.error(str(e))
+		#print(e) 
 		return {"R":-2}
 	return {"R":0,"D":R}
 
@@ -214,7 +229,8 @@ def Login():
 
 	
 	except Exception as e: 
-		print(e)
+		#print(e)
+		logging.error(str(e))
 		db.close()
 		return {"R":-2}
 	
@@ -248,9 +264,14 @@ def Login():
 			)
 			db.commit()
 			db.close()
+			# Registro de autenticacion exitosa.
+			logging.info(
+				f'Login exitoso usuario={request.json["uname"]}'
+			)
 			return {"R":0,"D":T}
 	except Exception as e:
-		print(e)
+		#print(e)
+		logging.error(str(e))
 		db.close()
 		return {"R":-4}
 
@@ -373,7 +394,8 @@ def Imagen():
 			)
 			R = cursor.fetchall()
 	except Exception as e: 
-		print(e)
+		#print(e)
+		logging.error(str(e))
 		db.close()
 		return {"R":-2}
 	
@@ -408,8 +430,14 @@ def Imagen():
 			shutil.move('tmp/'+str(id_Usuario),'img/'+str(idImagen)+'.'+str(request.json['ext']))
 			return {"R":0,"D":idImagen}
 	except Exception as e: 
-		print(e)
+		logging.error(str(e))
+		#print(e)
+		
 		db.close()
+		# Registro de login fallido.
+		logging.warning(
+			f'Login fallido usuario={request.json["uname"]}'
+		)
 		return {"R":-3}
 	
 """
@@ -473,7 +501,8 @@ def Descargar():
 			)
 			R = cursor.fetchall()
 	except Exception as e: 
-		print(e)
+		#print(e)
+		logging.error(str(e))
 		db.close()
 		return {"R":-2}
 		
@@ -493,7 +522,8 @@ def Descargar():
 			)
 			R = cursor.fetchall()
 	except Exception as e: 
-		print(e)
+		#print(e)
+		logging.error(str(e))
 		db.close()
 		return {"R":-3}
 	print(Path("img").resolve(),R[0][1])
