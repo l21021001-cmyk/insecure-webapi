@@ -138,6 +138,9 @@ def Registro():
 	except Exception as e:
 		logging.error(str(e))
 		#print(e) 
+		logging.exception(
+		    'Error interno en endpoint'
+		)
 		return {"R":-2}
 	return {"R":0,"D":R}
 
@@ -529,5 +532,16 @@ def Descargar():
 	print(Path("img").resolve(),R[0][1])
 	return static_file(R[0][1],Path(".").resolve())
 
+# OWASP A05:2025 Security Misconfiguration
+# Se deshabilita debug para evitar fuga de informacion sensible.
+
 if __name__ == '__main__':
-    run(host='localhost', port=8080, debug=True)
+
+    logging.info('WebAPI iniciada en modo produccion.')
+
+    run(
+        host='0.0.0.0',
+        port=8080,
+        debug=False,
+        reloader=False
+    )
