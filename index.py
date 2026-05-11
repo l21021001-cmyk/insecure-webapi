@@ -4,6 +4,8 @@ import hashlib
 import mysql.connector
 import base64
 import bcrypt
+import re
+import binascii
 import secrets
 import shutil
 import os
@@ -284,7 +286,59 @@ def Imagen():
 	# TODO checar si estan vacio los elementos del json
 	if not R:
 		return {"R":-1}
-	
+	# OWASP A05:2025 Injection
+	# OWASP A01:2025 Broken Access Control
+	# Validacion estricta de archivos subidos.
+
+	# Extensiones permitidas
+	ALLOWED_EXTENSIONS = ['png', 'jpg', 'jpeg', 'gif']
+
+	# Limite maximo: 5 MB
+	MAX_FILE_SIZE = 5 * 1024 * 1024
+
+	# Validar extension
+	ext = request.json['ext'].lower()
+
+	if ext not in ALLOWED_EXTENSIONS:
+	return {
+	"R": -10,
+	"MSG": "Extension no permitida"
+	}
+
+	# Sanitizar nombre
+	safe_name = re.sub(
+	r'[^a-zA-Z0-9_-]',
+	'',
+	request.json['name']
+	)
+
+	if not safe_name:
+	return {
+	"R": -11,
+	"MSG": "Nombre de archivo invalido"
+	}
+
+	# Validar Base64
+	try:
+	decoded_file = base64.b64decode(
+	request.json['data'].encode(),
+	validate=True
+	)
+	except binascii.Error:
+
+	return {
+	"R": -12,
+	"MSG": "Base64 invalido"
+	}
+
+	# Validar tamaño
+	if len(decoded_file) > MAX_FILE_SIZE:
+
+	return {
+	"R": -13,
+	"MSG": "Archivo demasiado grande"
+	}	
+
 	#dbcnf = loadDatabaseSettings('db.json');
 	# OWASP A04:2025
 	# Credenciales obtenidas desde variables de entorno.
